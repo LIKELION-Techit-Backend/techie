@@ -1,3 +1,4 @@
+
 from django.shortcuts import render
 from rest_framework.response import Response
 from .models import Member,Lecture,Course
@@ -8,6 +9,7 @@ class MemberListAPI(APIView):
     def get(self, request):
         queryset = Member.objects.all()
         print(queryset)
+        print("ASDASWDASDASD")
         serializer = MemberSerializer(queryset, many=True)
         return Response(serializer.data)
     
