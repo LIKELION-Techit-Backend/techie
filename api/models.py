@@ -6,7 +6,7 @@ class Member(models.Model):
   first_name = models.CharField(max_length=20)
   last_name = models.CharField(max_length=20)
   email = models.CharField(max_length=30, null=True)
-  password = models.CharField(max_length=20, default='your_default_value')
+  password = models.CharField(max_length=20, default='')
   
 class Team(models.Model):
   id = models.BigAutoField(primary_key=True)

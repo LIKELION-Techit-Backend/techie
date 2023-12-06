@@ -6,6 +6,11 @@ class MemberSerializer(serializers.ModelSerializer) :
     class Meta :
         model = Member
         fields = '__all__'
+        
+class TeamSerializer(serializers.ModelSerializer) :
+    class Meta :
+        model = Team
+        fields = '__all__'
 
 class LectureSerializer(serializers.ModelSerializer) :
     class Meta :
@@ -16,9 +21,3 @@ class CourseSerializer(serializers.ModelSerializer) :
     class Meta :
         model = Course
         fields = '__all__' 
-        
-class TeamSerializer(serializers.ModelSerializer) :
-    class Meta :
-
-        model = Team
-        fields = '__all__'
