@@ -3,8 +3,7 @@ from django.contrib.auth.models import User
 
 class Member(models.Model):    
   id = models.BigAutoField(primary_key=True)
-  first_name = models.CharField(max_length=20, null=False)
-  last_name = models.CharField(max_length=20, null=False)
+  name = models.CharField(max_length=20, null=False)
   email = models.CharField(max_length=30, null=False)
   password = models.CharField(max_length=20, null=False)
   
