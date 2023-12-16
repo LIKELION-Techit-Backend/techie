@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import MemberListAPI, TeamListAPI, LectureListAPI, CourseListAPI, MemberAPI
+from api.views import MemberListAPI, TeamListAPI, LectureListAPI, CourseListAPI, MemberAPI, CourseAPI
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,5 +24,7 @@ urlpatterns = [
 	path('api/member/<int:id>', MemberAPI.as_view()),
     path('api/team/', TeamListAPI.as_view()), 
     path('api/lecture/', LectureListAPI.as_view()),
+
     path('api/course/', CourseListAPI.as_view()),
+	path('api/course/<int:id>', CourseAPI.as_view()),
 ]

@@ -64,11 +64,55 @@ class LectureListAPI(APIView):
         serializer = LectureSerializer(queryset, many=True)
         return Response(serializer.data)
 
+class CourseAPI(APIView):
+    def get(self, request, id):
+        try:
+            course = Course.objects.get(id=id)
+            serializer = CourseSerializer(course)
+            return Response(serializer.data)
+        except:
+            return Response({"message": "course not found"},status=status.HTTP_404_NOT_FOUND)       
+        
+    def put(self, request, id):
+        try:
+            query = Course.objects.get(id=id)
+        except Course.DoesNotExist:
+            return Response({'error' : {'message' : "course not found!"}}, status = status.HTTP_404_NOT_FOUND)
+        
+        course = CourseSerializer(query,data=request.data)
+        if course.is_valid():
+            course.save()
+            return Response(course.data)
+        return Response(course.errors,status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        print(id)
+        try:
+            query = Course.objects.get(id=id)
+        except Course.DoesNotExist:
+            return Response({'error' : {'message' : "course not found!"}}, status = status.HTTP_404_NOT_FOUND)
+        result = Course.objects.get(id=id)
+        result.delete()
+        return Response({'message': 'successfully deleted!'}, status=204)
+    
+        
+    
 class CourseListAPI(APIView):
     def get(self, request):
         queryset = Course.objects.all()
         print(queryset)
         serializer = CourseSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    def post(self, request):
+        course = CourseSerializer(data=request.data)
+        
+        if course.is_valid():
+            if len(Course.objects.filter(title=request.data['title'])) == 0:
+                course.save()
+                return Response(course.data)
+            else:
+                return Response({"message": "course already exists"},status=status.HTTP_409_CONFLICT)        
+        return Response(course.errors,status=status.HTTP_400_BAD_REQUEST)
 
 # 멋사 화이팅
