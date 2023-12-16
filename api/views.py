@@ -30,7 +30,7 @@ class MemberAPI(APIView):
     def delete(self, request, id):
         result = Member.objects.get(id=id)
         result.delete()
-        return Response(status=204)
+        return Response({"message": "successfully deleted!"}, status=204)
     
 class MemberListAPI(APIView):
     def get(self, request):
