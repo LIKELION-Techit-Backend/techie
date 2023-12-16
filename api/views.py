@@ -21,21 +21,25 @@ class MemberAPI(APIView):
         except Member.DoesNotExist:
             return Response({'error' : {'message' : "member not found!"}}, status = status.HTTP_404_NOT_FOUND)
         
-        member = MemberSerializer(query,data=request.data)
+        member = MemberSerializer(query,data=request.data, partial=True)
         if member.is_valid():
             member.save()
             return Response(member.data)
         return Response(member.errors,status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
+        try:
+            query = Member.objects.get(id=id)
+        except Member.DoesNotExist:
+            return Response({'error' : {'message' : "member not found!"}}, status = status.HTTP_404_NOT_FOUND)
+        
         result = Member.objects.get(id=id)
         result.delete()
-        return Response(status=204)
+        return Response({"message": "successfully deleted!"}, status=204)
     
 class MemberListAPI(APIView):
     def get(self, request):
         queryset = Member.objects.all()
-        print(queryset)
         serializer = MemberSerializer(queryset, many=True)
         return Response(serializer.data)
     
@@ -49,13 +53,23 @@ class MemberListAPI(APIView):
             else:
                 return Response({"message": "email already exists"},status=status.HTTP_409_CONFLICT)        
         return Response(member.errors,status=status.HTTP_400_BAD_REQUEST)
-
+    
 class TeamListAPI(APIView):
     def get(self, request):
         queryset = Team.objects.all()
-        print(queryset)
         serializer = TeamSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    def post(self, request):
+        team = TeamSerializer(data=request.data)
+        if team.is_valid():
+            try:
+                Team.objects.get(team_name=request.data['team_name'])
+                return Response({"message": "team already exists"},status=status.HTTP_409_CONFLICT)        
+            except:
+                team.save()
+                return Response(team.data)
+        return Response(team.errors,status=status.HTTP_400_BAD_REQUEST)
     
 class LectureListAPI(APIView):
     def get(self, request):
