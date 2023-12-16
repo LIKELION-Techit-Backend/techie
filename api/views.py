@@ -70,3 +70,5 @@ class CourseListAPI(APIView):
         print(queryset)
         serializer = CourseSerializer(queryset, many=True)
         return Response(serializer.data)
+
+# 멋사 화이팅
