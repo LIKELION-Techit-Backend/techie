@@ -21,7 +21,7 @@ class MemberAPI(APIView):
         except Member.DoesNotExist:
             return Response({'error' : {'message' : "member not found!"}}, status = status.HTTP_404_NOT_FOUND)
         
-        member = MemberSerializer(query,data=request.data)
+        member = MemberSerializer(query,data=request.data, partial=True)
         if member.is_valid():
             member.save()
             return Response(member.data)
