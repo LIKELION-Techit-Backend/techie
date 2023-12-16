@@ -14,7 +14,7 @@ class Team(models.Model):
 class Lecture(models.Model):
   id = models.BigAutoField(primary_key=True)
   lecture_name = models.CharField(max_length=100)
-  course_id = models.CharField(max_length=20)
+  course_id = models.ForeignKey('Course', related_name='course', on_delete=models.CASCADE, db_column="course_id")
   
 class Course(models.Model):
   id = models.BigAutoField(primary_key=True)

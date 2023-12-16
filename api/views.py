@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer
 
 class MemberAPI(APIView):
-    def get(selft, request, id):
+    def get(self, request, id):
         try:
             member = Member.objects.get(id=id)
             serializer = MemberSerializer(member)
@@ -77,6 +77,44 @@ class LectureListAPI(APIView):
         print(queryset)
         serializer = LectureSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    def post(self, request):
+        lecture = LectureSerializer(data=request.data)
+        
+        if lecture.is_valid():
+            if len(Lecture.objects.filter(lecture_name=request.data['lecture_name'])) == 0:
+                lecture.save()
+                return Response(lecture.data)
+            else:
+                return Response({"message": "lecture id already exists"},status=status.HTTP_409_CONFLICT)        
+        return Response(lecture.errors,status=status.HTTP_400_BAD_REQUEST)
+
+    
+class LectureAPI(APIView):
+    def get(self, request, id):
+        try:
+            lecture = Lecture.objects.get(id=id)
+            serializer = LectureSerializer(lecture)
+            return Response(serializer.data)
+        except:
+            return Response({"message": "lecture not found"},status=status.HTTP_404_NOT_FOUND)       
+        
+    def put(self, request, id):
+        try:
+            query = Lecture.objects.get(id=id)
+        except Lecture.DoesNotExist:
+            return Response({'error' : {'message' : "lecture not found!"}}, status = status.HTTP_404_NOT_FOUND)
+        
+        lecture = LectureSerializer(query,data=request.data)
+        if lecture.is_valid():
+            lecture.save()
+            return Response(lecture.data)
+        return Response(lecture.errors,status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        result = Lecture.objects.get(id=id)
+        result.delete()
+        return Response({"message" : "successfully deleted"}, status=204)
 
 class CourseListAPI(APIView):
     def get(self, request):
