@@ -27,4 +27,6 @@ urlpatterns = [
     path('api/lecture/', LectureListAPI.as_view()),
     path('api/lecture/<int:id>', LectureAPI.as_view()),
     path('api/course/', CourseListAPI.as_view()),
+    path('api/team/<int:id>', TeamAPI.as_view()),
+    path('api/team/', TeamListAPI.as_view()),
 ]
