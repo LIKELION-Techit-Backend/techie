@@ -24,3 +24,6 @@ class Taken(models.Model):
   id = models.BigAutoField(primary_key=True)
   member = models.ForeignKey('Member', related_name='member', on_delete=models.CASCADE, db_column="member_id")
   lecture = models.ForeignKey('Lecture', related_name='lecture', on_delete=models.CASCADE, db_column="lecture_id")
+  
+  class Meta:
+    unique_together = ['foreign_key_1', 'foreign_key_2']
