@@ -85,6 +85,7 @@ class TeamAPI(APIView):
         result = Team.objects.get(id=id)
         result.delete()
         return Response({"message": "successfully deleted!"}, status=204)
+
 class TeamListAPI(APIView):
     def get(self, request):
         queryset = Team.objects.all()
@@ -101,7 +102,7 @@ class TeamListAPI(APIView):
                 team.save()
                 return Response(team.data)
         return Response(team.errors,status=status.HTTP_400_BAD_REQUEST)
-    
+
 class LectureListAPI(APIView):
     def get(self, request):
         queryset = Lecture.objects.all()
@@ -118,9 +119,8 @@ class LectureListAPI(APIView):
                 return Response(lecture.data)
             else:
                 return Response({"message": "lecture id already exists"},status=status.HTTP_409_CONFLICT)        
-        return Response(lecture.errors,status=status.HTTP_400_BAD_REQUEST)
+        return Response(lecture.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
 class LectureAPI(APIView):
     def get(self, request, id):
         try:
@@ -177,9 +177,7 @@ class CourseAPI(APIView):
         result = Course.objects.get(id=id)
         result.delete()
         return Response({'message': 'successfully deleted!'}, status=204)
-    
-        
-    
+
 class CourseListAPI(APIView):
     def get(self, request):
         queryset = Course.objects.all()
@@ -197,7 +195,6 @@ class CourseListAPI(APIView):
             else:
                 return Response({"message": "course already exists"},status=status.HTTP_409_CONFLICT)        
         return Response(course.errors,status=status.HTTP_400_BAD_REQUEST)
-
 
 class TakenAPI(APIView):
     def get(self, request, id):
@@ -232,24 +229,25 @@ class TakenListAPI(APIView):
         mid = request.data['mid']
         lid = request.data['lid']
         
+        # check member
         try:
             member = Member.objects.get(id=mid)
         except Member.DoesNotExist:
             return Response({"message": "member not exists"},status=status.HTTP_404_NOT_FOUND)        
-
+        # check lecture
         try:
             lecture = Lecture.objects.get(id=lid)
         except Lecture.DoesNotExist:
             return Response({"message": "lecture not exists"},status=status.HTTP_404_NOT_FOUND)        
-        
+        # check unique
         try:
             taken = Taken.objects.create(member=member, lecture=lecture)
         except:
             return Response({"message": "already taken"},status=status.HTTP_409_CONFLICT)
-        
+        # save
         try:
             serializer = TakenSerializer(taken)
             taken.save()
             return Response(serializer.data)
         except:
-            return Response({"message": "something's wrong"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
