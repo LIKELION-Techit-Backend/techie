@@ -19,3 +19,8 @@ class Lecture(models.Model):
 class Course(models.Model):
   id = models.BigAutoField(primary_key=True)
   title = models.CharField(max_length=30)
+  
+class Taken(models.Model):
+  id = models.BigAutoField(primary_key=True)
+  member = models.ForeignKey('Member', related_name='member', on_delete=models.CASCADE, db_column="member_id")
+  lecture = models.ForeignKey('Lecture', related_name='lecture', on_delete=models.CASCADE, db_column="lecture_id")
