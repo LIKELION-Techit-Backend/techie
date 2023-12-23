@@ -18,5 +18,4 @@ class Lecture(models.Model):
   
 class Course(models.Model):
   id = models.BigAutoField(primary_key=True)
-  course_name = models.CharField(max_length=30)
-  course_count = models.IntegerField(default=0)
+  title = models.CharField(max_length=30)

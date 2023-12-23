@@ -16,17 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import MemberListAPI, TeamListAPI, LectureListAPI, LectureAPI, CourseListAPI, MemberAPI, TeamAPI
+from api.views import MemberListAPI, TeamListAPI, LectureListAPI, LectureAPI, CourseAPI, CourseListAPI, MemberAPI, TeamAPI
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+  path('admin/', admin.site.urls),
 	path('api/member/', MemberListAPI.as_view()),
 	path('api/member/<int:id>', MemberAPI.as_view()),
 	path('api/team/', TeamListAPI.as_view()),
 	path('api/team/<int:id>', TeamAPI.as_view()),
-    path('api/lecture/', LectureListAPI.as_view()),
-    path('api/lecture/<int:id>', LectureAPI.as_view()),
-    path('api/course/', CourseListAPI.as_view()),
-    path('api/team/<int:id>', TeamAPI.as_view()),
-    path('api/team/', TeamListAPI.as_view()),
+  path('api/lecture/', LectureListAPI.as_view()),
+  path('api/lecture/<int:id>', LectureAPI.as_view()),
+  path('api/course/', CourseListAPI.as_view()),
+	path('api/course/<int:id>', CourseAPI.as_view()),
 ]
