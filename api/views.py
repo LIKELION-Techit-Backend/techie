@@ -2,9 +2,9 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Member, Lecture,Course, Team
+from .models import Member, Lecture,Course, Team, Taken
 from rest_framework.views import APIView
-from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer
+from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer
 
 class MemberAPI(APIView):
     def get(self, request, id):
@@ -198,4 +198,58 @@ class CourseListAPI(APIView):
                 return Response({"message": "course already exists"},status=status.HTTP_409_CONFLICT)        
         return Response(course.errors,status=status.HTTP_400_BAD_REQUEST)
 
-# 멋사 화이팅
+
+class TakenAPI(APIView):
+    def get(self, request, id):
+        try:
+            taken = Taken.objects.get(id=id)
+            serializer = TakenSerializer(taken)
+            return Response(serializer.data)
+        except:
+            return Response({"message": "taken not found"},status=status.HTTP_404_NOT_FOUND)       
+
+    def delete(self, request, id):
+        try:
+            Taken.objects.get(id=id)
+        except Taken.DoesNotExist:
+            return Response({'error' : {'message' : "taken not found!"}}, status = status.HTTP_404_NOT_FOUND)
+        
+        result = Taken.objects.get(id=id)
+        result.delete()
+        return Response({"message": "successfully deleted!"}, status=status.HTTP_200_OK)
+    
+class TakenListAPI(APIView):
+    def get(self, request):
+        mid = request.GET.get('mid')
+        if mid is not None:
+            queryset = Taken.objects.filter(member=mid)
+        else:
+            queryset = Taken.objects.all()
+        serializer = TakenSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        mid = request.data['mid']
+        lid = request.data['lid']
+        
+        try:
+            member = Member.objects.get(id=mid)
+        except Member.DoesNotExist:
+            return Response({"message": "member not exists"},status=status.HTTP_404_NOT_FOUND)        
+
+        try:
+            lecture = Lecture.objects.get(id=lid)
+        except Lecture.DoesNotExist:
+            return Response({"message": "lecture not exists"},status=status.HTTP_404_NOT_FOUND)        
+        
+        try:
+            taken = Taken.objects.create(member=member, lecture=lecture)
+        except:
+            return Response({"message": "already taken"},status=status.HTTP_409_CONFLICT)
+        
+        try:
+            serializer = TakenSerializer(taken)
+            taken.save()
+            return Response(serializer.data)
+        except:
+            return Response({"message": "something's wrong"}, status=status.HTTP_400_BAD_REQUEST)
