@@ -111,6 +111,8 @@ class LectureListAPI(APIView):
         return Response(serializer.data)
     
     def post(self, request):
+        print(request.data)
+        print("============================")
         lecture = LectureSerializer(data=request.data)
         
         if lecture.is_valid():
@@ -169,7 +171,6 @@ class CourseAPI(APIView):
         return Response(course.errors,status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
-        print(id)
         try:
             query = Course.objects.get(id=id)
         except Course.DoesNotExist:
@@ -181,7 +182,6 @@ class CourseAPI(APIView):
 class CourseListAPI(APIView):
     def get(self, request):
         queryset = Course.objects.all()
-        print(queryset)
         serializer = CourseSerializer(queryset, many=True)
         return Response(serializer.data)
     
@@ -251,3 +251,43 @@ class TakenListAPI(APIView):
             return Response(serializer.data)
         except:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SyncAPI(APIView):
+    def _member_exists(self, request):
+        try:
+            email = request.data["email"]
+            member = Member.objects.get(email=email)
+            return True
+        except Member.DoesNotExist as e:
+            return False
+        
+    def _get_course(self, title, code):
+        try:
+            course = Course.objects.get(title=title, code=code)
+            course_serialized = CourseSerializer(course)
+            return course_serialized
+        except Course.DoesNotExist as e:
+            return None
+
+    def post(self, request):
+        try:
+            if not self._member_exists(request=request):
+                return Response({"message": "Member does not exist in DB"},status=status.HTTP_404_NOT_FOUND)                  
+            title = request.data["title"]
+            code = request.data["code"]
+            course_serialized = self._get_course(title=title, code=code)
+            if course_serialized is None:
+                data = {"title": title, "code": code}
+                course_serialized = CourseSerializer(data=data)
+                if course_serialized.is_valid():
+                    course_serialized.save()
+                lectures = request.data["course"]
+                lectures = [{"lecture_name": l.get("title"), "course_id": course_serialized.data.get("id")} for l in lectures]
+                lecture_serialized = LectureSerializer(data=lectures, many=True)
+                if lecture_serialized.is_valid():
+                    lecture_serialized.save()
+            return Response(status=status.HTTP_200_OK)             
+        except Exception as e:
+            return Response({"message": f"{e}"},status=status.HTTP_404_NOT_FOUND)       
+
