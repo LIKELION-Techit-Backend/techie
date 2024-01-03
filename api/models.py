@@ -19,6 +19,7 @@ class Lecture(models.Model):
 class Course(models.Model):
   id = models.BigAutoField(primary_key=True)
   title = models.CharField(max_length=30)
+  code = models.CharField(max_length=64)
   
 class Taken(models.Model):
   id = models.BigAutoField(primary_key=True)
@@ -27,3 +28,4 @@ class Taken(models.Model):
   
   class Meta:
     unique_together = ['member', 'lecture']
+ 
