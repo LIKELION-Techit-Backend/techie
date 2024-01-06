@@ -203,7 +203,7 @@ class TakenAPI(APIView):
             serializer = TakenSerializer(taken)
             return Response(serializer.data)
         except:
-            return Response({"message": "taken not found"},status=status.HTTP_404_NOT_FOUND)       
+            return Response({"message": "taken course is not found"},status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, id):
         try:
@@ -233,12 +233,12 @@ class TakenListAPI(APIView):
         try:
             member = Member.objects.get(id=mid)
         except Member.DoesNotExist:
-            return Response({"message": "member not exists"},status=status.HTTP_404_NOT_FOUND)        
+            return Response({"message": "member does not exists"},status=status.HTTP_404_NOT_FOUND)        
         # check lecture
         try:
             lecture = Lecture.objects.get(id=lid)
         except Lecture.DoesNotExist:
-            return Response({"message": "lecture not exists"},status=status.HTTP_404_NOT_FOUND)        
+            return Response({"message": "lecture does not exists"},status=status.HTTP_404_NOT_FOUND)        
         # check unique
         try:
             taken = Taken.objects.create(member=member, lecture=lecture)
