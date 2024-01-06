@@ -254,13 +254,22 @@ class TakenListAPI(APIView):
 
 
 class SyncAPI(APIView):
-    def _member_exists(self, request):
+    def _get_member(self, request):
         try:
             email = request.data["email"]
             member = Member.objects.get(email=email)
-            return True
+            member_serialized = MemberSerializer(member)
+            return member_serialized
         except Member.DoesNotExist as e:
-            return False
+            return None
+        
+    def _get_lectures(self, course_serialized):
+        try:
+            course_id = course_serialized.data.get("id")
+            lectures = Lecture.objects.filter(course_id=course_id)
+            return lectures  
+        except:
+            return None
         
     def _get_course(self, title, code):
         try:
@@ -272,21 +281,35 @@ class SyncAPI(APIView):
 
     def post(self, request):
         try:
-            if not self._member_exists(request=request):
-                return Response({"message": "Member does not exist in DB"},status=status.HTTP_404_NOT_FOUND)                  
+            member = self._get_member(request=request) 
+            if member is None:
+                return Response({"message": "Member does not exist in DB"}, status=status.HTTP_404_NOT_FOUND)                  
             title = request.data["title"]
             code = request.data["code"]
+            lectures = request.data["course"]
             course_serialized = self._get_course(title=title, code=code)
             if course_serialized is None:
                 data = {"title": title, "code": code}
                 course_serialized = CourseSerializer(data=data)
                 if course_serialized.is_valid():
                     course_serialized.save()
-                lectures = request.data["course"]
-                lectures = [{"lecture_name": l.get("title"), "course_id": course_serialized.data.get("id")} for l in lectures]
-                lecture_serialized = LectureSerializer(data=lectures, many=True)
+                lecturelist = [{"lecture_name": l.get("title"), "course_id": course_serialized.data.get("id")} for l in lectures]
+                lecture_serialized = LectureSerializer(data=lecturelist, many=True)
                 if lecture_serialized.is_valid():
                     lecture_serialized.save()
+            lecture_serialized = self._get_lectures(course_serialized=course_serialized)
+            print(lecture_serialized)
+            # taken = []
+            # member_id = member.data.get("id")
+            # for l in lectures:
+            #     if l.get("finished") == True:
+            #         taken.append({"member": member_id, "lecture": course_serialized.data.get("id")})
+            # print(taken)
+            # taken_serialized = TakenSerializer(data=taken, many=True)
+
+            # if taken_serialized.is_valid():
+            #     print(f"serializer ===== {taken_serialized.data}")
+            #     taken_serialized.save()
             return Response(status=status.HTTP_200_OK)             
         except Exception as e:
             return Response({"message": f"{e}"},status=status.HTTP_404_NOT_FOUND)       
