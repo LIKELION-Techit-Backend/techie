@@ -265,8 +265,7 @@ class SyncAPI(APIView):
         try:
             email = request.data["email"]
             member = Member.objects.get(email=email)
-            member_serialized = MemberSerializer(member)
-            return member_serialized
+            return member
         except Member.DoesNotExist as e:
             return None
 
@@ -308,18 +307,13 @@ class SyncAPI(APIView):
                     lecture_serialized.save()
             lecture_serialized = self._get_lectures(
                 course_serialized=course_serialized)
-            print(lecture_serialized)
-            # taken = []
-            # member_id = member.data.get("id")
-            # for l in lectures:
-            #     if l.get("finished") == True:
-            #         taken.append({"member": member_id, "lecture": course_serialized.data.get("id")})
-            # print(taken)
-            # taken_serialized = TakenSerializer(data=taken, many=True)
-
-            # if taken_serialized.is_valid():
-            #     print(f"serializer ===== {taken_serialized.data}")
-            #     taken_serialized.save()
+            course_id = course_serialized.data.get("id")
+            for l in lectures:
+                if l.get("finished") == True:
+                    lecture = Lecture.objects.get(
+                        lecture_name=l.get('title'), course_id=course_id)
+                    Taken.objects.create(
+                        member=member, lecture=lecture)
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": f"{e}"}, status=status.HTTP_404_NOT_FOUND)
