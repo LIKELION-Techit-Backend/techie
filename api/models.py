@@ -7,6 +7,9 @@ class Member(models.Model):
     name = models.CharField(max_length=20, null=False)
     email = models.CharField(max_length=30, null=False)
     password = models.CharField(max_length=20, null=False)
+    role = models.CharField(max_length=10, null=False, default="member")
+    team = models.ForeignKey(
+        'Team', related_name='team', on_delete=models.CASCADE, db_column="team_id")
 
 
 class Team(models.Model):

@@ -3,6 +3,8 @@ from rest_framework import status
 from .models import Member, Lecture, Course, Team, Taken
 from rest_framework.views import APIView
 from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class MemberAPI(APIView):
@@ -43,6 +45,7 @@ class MemberListAPI(APIView):
         serializer = MemberSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(query_serializer=MemberSerializer, responses={200: 'Success'})
     def post(self, request):
         member = MemberSerializer(data=request.data)
 

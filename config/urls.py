@@ -17,6 +17,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from api.views import MemberListAPI, TeamListAPI, LectureListAPI, LectureAPI, CourseAPI, CourseListAPI, MemberAPI, TeamAPI, TakenAPI, TakenListAPI, SyncAPI, InitializeDataAPI
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Techit Together",
+        default_version='1.0.0',
+        description="해당 문서 설명(예: humanscape-project API 문서)",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email=""),  # 부가정보
+        license=openapi.License(name="sjsu-likelion"),     # 부가정보
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny],
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,4 +48,10 @@ urlpatterns = [
     path('api/taken/<int:id>', TakenAPI.as_view()),
     path('api/sync', SyncAPI.as_view()),
     path('api/initialize', InitializeDataAPI.as_view()),
+    path(r'swagger(?P<format>\.json|\.yaml)', schema_view.without_ui(
+        cache_timeout=0), name='schema-json'),
+    path(r'swagger', schema_view.with_ui(
+        'swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path(r'redoc', schema_view.with_ui(
+        'redoc', cache_timeout=0), name='schema-redoc-v1'),
 ]
