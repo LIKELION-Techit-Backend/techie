@@ -323,3 +323,12 @@ class SyncAPI(APIView):
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": f"{e}"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class InitializeDataAPI(APIView):
+    def delete(self, request):
+        Member.objects.all().delete()
+        Lecture.objects.all().delete()
+        Course.objects.all().delete()
+        Taken.objects.all().delete()
+        return Response({"message": "deleted"}, status=status.HTTP_200_OK)

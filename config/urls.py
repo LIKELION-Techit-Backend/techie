@@ -16,19 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import MemberListAPI, TeamListAPI, LectureListAPI, LectureAPI, CourseAPI, CourseListAPI, MemberAPI, TeamAPI, TakenAPI, TakenListAPI, SyncAPI
+from api.views import MemberListAPI, TeamListAPI, LectureListAPI, LectureAPI, CourseAPI, CourseListAPI, MemberAPI, TeamAPI, TakenAPI, TakenListAPI, SyncAPI, InitializeDataAPI
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-	path('api/member/', MemberListAPI.as_view()),
-	path('api/member/<int:id>', MemberAPI.as_view()),
-	path('api/team/', TeamListAPI.as_view()),
-	path('api/team/<int:id>', TeamAPI.as_view()),
+    path('api/member/', MemberListAPI.as_view()),
+    path('api/member/<int:id>', MemberAPI.as_view()),
+    path('api/team/', TeamListAPI.as_view()),
+    path('api/team/<int:id>', TeamAPI.as_view()),
     path('api/lecture/', LectureListAPI.as_view()),
     path('api/lecture/<int:id>', LectureAPI.as_view()),
     path('api/course/', CourseListAPI.as_view()),
-	path('api/course/<int:id>', CourseAPI.as_view()),
+    path('api/course/<int:id>', CourseAPI.as_view()),
     path('api/taken', TakenListAPI.as_view()),
-	path('api/taken/<int:id>', TakenAPI.as_view()),
+    path('api/taken/<int:id>', TakenAPI.as_view()),
     path('api/sync', SyncAPI.as_view()),
+    path('api/initialize', InitializeDataAPI.as_view()),
 ]
