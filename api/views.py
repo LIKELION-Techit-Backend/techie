@@ -67,45 +67,12 @@ class TeamAPI(APIView):
         except:
             return Response({"message": "team not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    def put(self, request, id):
-        try:
-            query = Team.objects.get(id=id)
-        except Team.DoesNotExist:
-            return Response({'error': {'message': "team not found!"}}, status=status.HTTP_404_NOT_FOUND)
-
-        team = TeamSerializer(query, data=request.data, partial=True)
-        if team.is_valid():
-            team.save()
-            return Response(team.data)
-        return Response(team.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, id):
-        try:
-            query = Team.objects.get(id=id)
-        except Team.DoesNotExist:
-            return Response({'error': {'message': "team not found!"}}, status=status.HTTP_404_NOT_FOUND)
-
-        result = Team.objects.get(id=id)
-        result.delete()
-        return Response({"message": "successfully deleted!"}, status=204)
-
 
 class TeamListAPI(APIView):
     def get(self, request):
         queryset = Team.objects.all()
         serializer = TeamSerializer(queryset, many=True)
         return Response(serializer.data)
-
-    def post(self, request):
-        team = TeamSerializer(data=request.data)
-        if team.is_valid():
-            try:
-                Team.objects.get(team_name=request.data['team_name'])
-                return Response({"message": "team already exists"}, status=status.HTTP_409_CONFLICT)
-            except:
-                team.save()
-                return Response(team.data)
-        return Response(team.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LectureListAPI(APIView):
