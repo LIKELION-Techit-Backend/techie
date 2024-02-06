@@ -6,6 +6,7 @@ from .serializers import LoginSerializer, MemberSerializer, TeamSerializer, Lect
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib import auth
+from django.contrib.auth.hashers import make_password
 
 
 class MemberAPI(APIView):
@@ -61,7 +62,7 @@ class MemberListAPI(APIView):
             if data['is_staff'] is True:
                 member = Member.objects.create(
                     email=data['email'],
-                    password=data['password'],
+                    password=make_password(data['password']),
                     first_name=data['first_name'],
                     last_name=data['last_name'],
                     is_staff=True,
