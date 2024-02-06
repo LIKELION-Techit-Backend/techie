@@ -1,10 +1,11 @@
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Member, Lecture, Course, Team, Taken
+from .models import Member, Lecture, Course, Team, Taken, Pending
 from rest_framework.views import APIView
-from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer
+from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.contrib import auth
 
 
 class MemberAPI(APIView):
@@ -45,17 +46,42 @@ class MemberListAPI(APIView):
         serializer = MemberSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @swagger_auto_schema(query_serializer=MemberSerializer, responses={200: 'Success'})
+    @swagger_auto_schema(request_body=CreateUserSerializer, responses={200: 'Success'})
     def post(self, request):
-        member = MemberSerializer(data=request.data)
+        data = request.data
 
-        if member.is_valid():
-            if len(Member.objects.filter(email=request.data['email'])) == 0:
+        try:
+            member = Member.objects.get(email=data['email'])
+            return Response({"message": "email already exists"}, status=status.HTTP_409_CONFLICT)
+        except Member.DoesNotExist:
+            try:
+                team = Team.objects.get(id=data['team'])
+            except:
+                return Response({"message": "team not found"}, status=status.HTTP_404_NOT_FOUND)
+            if data['is_staff'] is True:
+                member = Member.objects.create(
+                    email=data['email'],
+                    password=data['password'],
+                    first_name=data['first_name'],
+                    last_name=data['last_name'],
+                    is_staff=True,
+                    team=team
+                )
                 member.save()
-                return Response(member.data)
+                auth.login(request, member)
             else:
-                return Response({"message": "email already exists"}, status=status.HTTP_409_CONFLICT)
-        return Response(member.errors, status=status.HTTP_400_BAD_REQUEST)
+                member = Member.objects.create(
+                    email=data['email'],
+                    password=data['password'],
+                    first_name=data['first_name'],
+                    last_name=data['last_name'],
+                    is_staff=False
+                )
+                member.save()
+                auth.login(request, member)
+                Pending.objects.create(member=member, team=team)
+            serializer = MemberSerializer(member).data
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class TeamAPI(APIView):
@@ -292,6 +318,7 @@ class SyncAPI(APIView):
 class InitializeDataAPI(APIView):
     def delete(self, request):
         Member.objects.all().delete()
+        Pending.objects.all().delete()
         Lecture.objects.all().delete()
         Course.objects.all().delete()
         Taken.objects.all().delete()
