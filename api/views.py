@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Member, Lecture, Course, Team, Taken, Pending
 from rest_framework.views import APIView
-from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
+from .serializers import LoginSerializer, MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib import auth
@@ -72,16 +72,41 @@ class MemberListAPI(APIView):
             else:
                 member = Member.objects.create(
                     email=data['email'],
-                    password=data['password'],
                     first_name=data['first_name'],
                     last_name=data['last_name'],
                     is_staff=False
                 )
+                member.set_password(data['password'])
                 member.save()
                 auth.login(request, member)
                 Pending.objects.create(member=member, team=team)
-            serializer = MemberSerializer(member).data
+            serializer = MemberSerializer(member)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class LoginAPI(APIView):
+    @swagger_auto_schema(request_body=LoginSerializer, responses={200: 'Success'})
+    def post(self, request):
+        data = request.data
+        email = data['email']
+        password = data['password']
+
+        try:
+            Member.objects.get(email=email)
+        except Member.DoesNotExist:
+            return Response({"message": "email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
+
+        member = auth.authenticate(request, username=email, password=password)
+        print(member)
+        if member is not None:
+            auth.login(request, member)
+            return Response(MemberSerializer(member).data, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "incorrect password"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def delete(self, request):
+        auth.logout(request)
+        return Response({"message": "logged out"}, status=status.HTTP_200_OK)
 
 
 class TeamAPI(APIView):

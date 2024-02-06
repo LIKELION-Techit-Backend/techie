@@ -40,3 +40,8 @@ class CreateUserSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=30)
     is_staff = serializers.BooleanField()
     team = serializers.IntegerField()
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(max_length=30)
