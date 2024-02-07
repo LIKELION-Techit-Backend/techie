@@ -11,6 +11,7 @@ from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
+from concurrent.futures import ThreadPoolExecutor
 
 
 class MemberAPI(APIView):
@@ -338,6 +339,14 @@ class SyncAPI(APIView):
             return None
 
     def post(self, request):
+        def process_lecture(l, course_id, member):
+            lecture = Lecture.objects.get(
+                lecture_name=l.get('title'), course_id=course_id)
+            if l.get("finished") is True:
+                Taken.objects.create(member=member, lecture=lecture)
+            else:
+                Taken.objects.get(member=member, lecture=lecture).delete()
+
         try:
             member = self._get_member(request=request)
             if member is None:
@@ -360,12 +369,9 @@ class SyncAPI(APIView):
             lecture_serialized = self._get_lectures(
                 course_serialized=course_serialized)
             course_id = course_serialized.data.get("id")
-            for l in lectures:
-                if l.get("finished") == True:
-                    lecture = Lecture.objects.get(
-                        lecture_name=l.get('title'), course_id=course_id)
-                    Taken.objects.create(
-                        member=member, lecture=lecture)
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                for l in lectures:
+                    executor.submit(process_lecture, l, course_id, member)
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": f"{e}"}, status=status.HTTP_404_NOT_FOUND)
