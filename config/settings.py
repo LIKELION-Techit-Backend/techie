@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     'api',
     'rest_framework',
+    'rest_framework_simplejwt',
     'drf_yasg'
 ]
 
@@ -136,3 +137,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'api.Member'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}

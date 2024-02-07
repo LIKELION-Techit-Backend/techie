@@ -8,6 +8,9 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 
 class MemberAPI(APIView):
@@ -83,7 +86,6 @@ class MemberListAPI(APIView):
                     team=team
                 )
                 member.save()
-                auth.login(request, member)
             else:
                 member = Member.objects.create(
                     email=data['email'],
@@ -93,7 +95,6 @@ class MemberListAPI(APIView):
                 )
                 member.set_password(data['password'])
                 member.save()
-                auth.login(request, member)
                 Pending.objects.create(member=member, team=team)
             return Response({
                 "id": member.id,
@@ -120,14 +121,21 @@ class LoginAPI(APIView):
         member = auth.authenticate(request, username=email, password=password)
         print(member)
         if member is not None:
-            auth.login(request, member)
-            return Response(MemberSerializer(member).data, status=status.HTTP_200_OK)
+            refresh = RefreshToken.for_user(member)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user_data': {
+                    "id": member.id,
+                    "email": member.email,
+                    "first_name": member.first_name,
+                    "last_name": member.last_name,
+                    "team": TeamSerializer(member.team).data,
+                    "is_staff": member.is_staff
+                }
+            }, status=status.HTTP_200_OK)
         else:
             return Response({"message": "incorrect password"}, status=status.HTTP_401_UNAUTHORIZED)
-
-    def delete(self, request):
-        auth.logout(request)
-        return Response({"message": "logged out"}, status=status.HTTP_200_OK)
 
 
 class TeamAPI(APIView):
@@ -303,6 +311,8 @@ class TakenListAPI(APIView):
 
 
 class SyncAPI(APIView):
+    permission_classes([IsAuthenticated])
+
     def _get_member(self, request):
         try:
             email = request.data["email"]
