@@ -1,3 +1,4 @@
+import json
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Member, Lecture, Course, Team, Taken, Pending
@@ -13,8 +14,15 @@ class MemberAPI(APIView):
     def get(self, request, id):
         try:
             member = Member.objects.get(id=id)
-            serializer = MemberSerializer(member)
-            return Response(serializer.data)
+            team = TeamSerializer(member.team).data
+            return Response({
+                "id": member.id,
+                "email": member.email,
+                "first_name": member.first_name,
+                "last_name": member.last_name,
+                "team": team,
+                "is_staff": member.is_staff
+            }, status=status.HTTP_200_OK)
         except:
             return Response({"message": "member not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -44,8 +52,14 @@ class MemberAPI(APIView):
 class MemberListAPI(APIView):
     def get(self, request):
         queryset = Member.objects.all()
-        serializer = MemberSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response([{
+            "id": member.id,
+            "email": member.email,
+            "first_name": member.first_name,
+            "last_name": member.last_name,
+            "team": TeamSerializer(member.team).data,
+            "is_staff": member.is_staff
+        } for member in queryset], status=status.HTTP_200_OK)
 
     @swagger_auto_schema(request_body=CreateUserSerializer, responses={200: 'Success'})
     def post(self, request):
@@ -81,8 +95,14 @@ class MemberListAPI(APIView):
                 member.save()
                 auth.login(request, member)
                 Pending.objects.create(member=member, team=team)
-            serializer = MemberSerializer(member)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({
+                "id": member.id,
+                "email": member.email,
+                "first_name": member.first_name,
+                "last_name": member.last_name,
+                "team": team,
+                "is_staff": member.is_staff
+            }, status=status.HTTP_201_CREATED)
 
 
 class LoginAPI(APIView):
