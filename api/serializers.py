@@ -1,6 +1,6 @@
 # product/serializers.py
 from rest_framework import serializers
-from .models import Member, Lecture, Course, Team, Taken
+from .models import Member, Lecture, Course, Pending, Team, Taken
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -45,3 +45,13 @@ class CreateUserSerializer(serializers.Serializer):
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(max_length=30)
+
+
+class PendingSerializer(serializers.Serializer):
+    class Meta:
+        model = Pending
+        fields = '__all__'
+
+
+class PendingQuerySerializer(serializers.Serializer):
+    team_id = serializers.IntegerField()

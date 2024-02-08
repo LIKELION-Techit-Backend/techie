@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Member, Lecture, Course, Team, Taken, Pending
 from rest_framework.views import APIView
-from .serializers import LoginSerializer, MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
+from .serializers import LoginSerializer, MemberSerializer, PendingQuerySerializer, PendingSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib import auth
@@ -86,13 +86,16 @@ class MemberListAPI(APIView):
                     is_staff=True,
                     team=team
                 )
+                member.set_password(data['password'])
                 member.save()
             else:
                 member = Member.objects.create(
                     email=data['email'],
+                    password=make_password(data['password']),
                     first_name=data['first_name'],
                     last_name=data['last_name'],
-                    is_staff=False
+                    is_staff=False,
+                    team=None
                 )
                 member.set_password(data['password'])
                 member.save()
@@ -102,7 +105,7 @@ class MemberListAPI(APIView):
                 "email": member.email,
                 "first_name": member.first_name,
                 "last_name": member.last_name,
-                "team": team,
+                "team": TeamSerializer(team).data,
                 "is_staff": member.is_staff
             }, status=status.HTTP_201_CREATED)
 
@@ -375,6 +378,32 @@ class SyncAPI(APIView):
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": f"{e}"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PendingAPI(APIView):
+    @swagger_auto_schema(query_serializer=PendingQuerySerializer, responses={200: 'Success'})
+    def get(self, request):
+        team_id = request.GET.get('team_id')
+        try:
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            return Response({'message': 'Team does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        pendings = Pending.objects.filter(team=team)
+        serializer = PendingSerializer(pendings, many=True)
+
+        data = []
+        for pending in pendings:
+            m = pending.member
+            data.append({
+                'id': m.id,
+                'email': m.email,
+                'first_name': m.first_name,
+                'last_name': m.last_name,
+                'date_requested': m.date_joined,
+            })
+
+        return Response(data)
 
 
 class InitializeDataAPI(APIView):
