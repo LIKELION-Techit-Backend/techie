@@ -55,3 +55,9 @@ class PendingSerializer(serializers.Serializer):
 
 class PendingQuerySerializer(serializers.Serializer):
     team_id = serializers.IntegerField()
+
+
+class PendingResponseSerialzier(serializers.Serializer):
+    member_id = serializers.IntegerField()
+    team_id = serializers.IntegerField()
+    accept = serializers.BooleanField()

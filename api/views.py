@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Member, Lecture, Course, Team, Taken, Pending
 from rest_framework.views import APIView
-from .serializers import LoginSerializer, MemberSerializer, PendingQuerySerializer, PendingSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
+from .serializers import LoginSerializer, MemberSerializer, PendingQuerySerializer, PendingResponseSerialzier, PendingSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib import auth
@@ -388,10 +388,7 @@ class PendingAPI(APIView):
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
             return Response({'message': 'Team does not exist'}, status=status.HTTP_404_NOT_FOUND)
-
         pendings = Pending.objects.filter(team=team)
-        serializer = PendingSerializer(pendings, many=True)
-
         data = []
         for pending in pendings:
             m = pending.member
@@ -402,8 +399,29 @@ class PendingAPI(APIView):
                 'last_name': m.last_name,
                 'date_requested': m.date_joined,
             })
-
         return Response(data)
+
+    @swagger_auto_schema(request_body=PendingResponseSerialzier, responses={200: 'Success'})
+    def post(self, request):
+        data = request.data
+        accept = data['accept']
+        try:
+            team = Team.objects.get(id=data['team_id'])
+            member = Member.objects.get(id=data['member_id'])
+            pending = Pending.objects.get(team=team, member=member)
+            if accept == True:
+                member.team = team
+                member.save()
+                pending.delete()
+                return Response({'message': 'Successfully accepted'}, status=status.HTTP_200_OK)
+            pending.delete()
+            return Response({'message': 'Successfully rejected'}, status=status.HTTP_200_OK)
+        except Team.DoesNotExist:
+            return Response({'message': 'Team does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Member.DoesNotExist:
+            return Response({'message': 'Member does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Pending.DoesNotExist:
+            return Response({'message': 'Not on the pending list'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InitializeDataAPI(APIView):
