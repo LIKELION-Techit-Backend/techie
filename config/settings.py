@@ -134,3 +134,176 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+COMMUNITIES = [
+    {
+        "id": 1,
+        "team_name": "UCB",
+        "full_name": "UC Berkeley"
+    },
+    {
+        "id": 2,
+        "team_name": "MSU",
+        "full_name": "Michigan State University"
+    },
+    {
+        "id": 3,
+        "team_name": "DVC",
+        "full_name": "Diablo Valley College"
+    },
+    {
+        "id": 4,
+        "team_name": "NYU",
+        "full_name": "New York University"
+    },
+    {
+        "id": 5,
+        "team_name": "GIT",
+        "full_name": "Georgia Institute of Technology"
+    },
+    {
+        "id": 6,
+        "team_name": "SFC",
+        "full_name": "SF city"
+    },
+    {
+        "id": 7,
+        "team_name": "UW",
+        "full_name": "University of Washington"
+    },
+    {
+        "id": 8,
+        "team_name": "GGC",
+        "full_name": "Georgia Gwinnett College"
+    },
+    {
+        "id": 9,
+        "team_name": "AU",
+        "full_name": "Auburn University"
+    },
+    {
+        "id": 10,
+        "team_name": "UCLA",
+        "full_name": "UC Los Angeles"
+    },
+    {
+        "id": 11,
+        "team_name": "CMU",
+        "full_name": "Carnegie Mellon University"
+    },
+    {
+        "id": 12,
+        "team_name": "EU",
+        "full_name": "Emory University"
+    },
+    {
+        "id": 13,
+        "team_name": "BU",
+        "full_name": "Boston University"
+    },
+    {
+        "id": 14,
+        "team_name": "UM",
+        "full_name": "Minnesota"
+    },
+    {
+        "id": 15,
+        "team_name": "SUNY",
+        "full_name": "State university of New York"
+    },
+    {
+        "id": 16,
+        "team_name": "UND",
+        "full_name": "University of Notre Dame"
+    },
+    {
+        "id": 1,
+        "team_name": "UCB",
+        "full_name": "UC Berkeley"
+    },
+    {
+        "id": 17,
+        "team_name": "UHM",
+        "full_name": "University of Hawaii at Manoa"
+    },
+    {
+        "id": 18,
+        "team_name": "OCC",
+        "full_name": "Orange Coast College"
+    },
+    {
+        "id": 19,
+        "team_name": "UF",
+        "full_name": "University of Florida"
+    },
+    {
+        "id": 20,
+        "team_name": "SU",
+        "full_name": "Syracuse University"
+    },
+    {
+        "id": 21,
+        "team_name": "OSU",
+        "full_name": "Oregon State University"
+    },
+    {
+        "id": 22,
+        "team_name": "CSTCC",
+        "full_name": "Cincinnati State Technical and Community College"
+    },
+    {
+        "id": 23,
+        "team_name": "CSULB",
+        "full_name": "California State University, Long Beach"
+    },
+    {
+        "id": 24,
+        "team_name": "UCI",
+        "full_name": "UC Irvine"
+    },
+    {
+        "id": 25,
+        "team_name": "UCSD",
+        "full_name": "UC San Diego"
+    },
+    {
+        "id": 26,
+        "team_name": "UCR",
+        "full_name": "UC Riverside"
+    },
+    {
+        "id": 27,
+        "team_name": "SJSU",
+        "full_name": "San Jose State University"
+    },
+    {
+        "id": 28,
+        "team_name": "UCD",
+        "full_name": "UC Davis"
+    },
+    {
+        "id": 29,
+        "team_name": "SMB",
+        "full_name": "Santa Monica College"
+    },
+    {
+        "id": 30,
+        "team_name": "UIUC",
+        "full_name": "University of Illinois at Urbana-Champaign"
+    },
+    {
+        "id": 31,
+        "team_name": "USC",
+        "full_name": "University of Southern California"
+    },
+    {
+        "id": 32,
+        "team_name": "UCSB",
+        "full_name": "UC Santa Barbara"
+    },
+    {
+        "id": 33,
+        "team_name": "CSUSB",
+        "full_name": "CSU San Bernardino"
+    }
+]
