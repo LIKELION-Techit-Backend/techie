@@ -1,36 +1,20 @@
-name: deploy-to-eb
+name: Build and Deployment
 
-on:
-  push:
-    branches: [ main ]
+on: push
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: [3.11]
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Create ZIP deployment package
-        run: zip -r deploy_package.zip ./
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
-          aws-region: "us-east-2"
-
-      - name: Upload package to S3 bucket
-        run: aws s3 cp deploy_package.zip s3://techitbucket/
-
-      - name: Create new ElasticBeanstalk Application Version
-        run: |
-          aws elasticbeanstalk create-application-version \
-          --application-name techit \
-          --source-bundle S3Bucket="techitbucket",S3Key="deploy_package.zip" \
-          --version-label "ver-${{ github.sha }}" \
-          --description "commit-sha-${{ github.sha }}"
-
-      - name: Deploy new ElasticBeanstalk Application Version
-        run: aws elasticbeanstalk update-environment --environment-name Techit-env --version-label "ver-${{ github.sha }}"
+    - uses: actions/checkout@v2
+    - name: Django aws eb deployment
+      uses: joel-hanson/django-aws-eb-deploy@V1.1
+      with:
+        python_version: ${{ matrix.python_version }}
+        aws_access_key_id: ${{ secrets.ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.SECRET_ACCESS_KEY }}
+        deploy: true
