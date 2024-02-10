@@ -1,18 +1,32 @@
+import json
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Member, Lecture, Course, Team, Taken
+from .models import Member, Lecture, Course, Team, Taken, Pending
 from rest_framework.views import APIView
-from .serializers import MemberSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer
+from .serializers import LoginSerializer, MemberSerializer, PendingQuerySerializer, PendingResponseSerialzier, PendingSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.contrib import auth
+from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
+from concurrent.futures import ThreadPoolExecutor
 
 
 class MemberAPI(APIView):
     def get(self, request, id):
         try:
             member = Member.objects.get(id=id)
-            serializer = MemberSerializer(member)
-            return Response(serializer.data)
+            team = TeamSerializer(member.team).data
+            return Response({
+                "id": member.id,
+                "email": member.email,
+                "first_name": member.first_name,
+                "last_name": member.last_name,
+                "team": team,
+                "is_staff": member.is_staff
+            }, status=status.HTTP_200_OK)
         except:
             return Response({"message": "member not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -42,20 +56,90 @@ class MemberAPI(APIView):
 class MemberListAPI(APIView):
     def get(self, request):
         queryset = Member.objects.all()
-        serializer = MemberSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response([{
+            "id": member.id,
+            "email": member.email,
+            "first_name": member.first_name,
+            "last_name": member.last_name,
+            "team": TeamSerializer(member.team).data,
+            "is_staff": member.is_staff
+        } for member in queryset], status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(query_serializer=MemberSerializer, responses={200: 'Success'})
+    @swagger_auto_schema(request_body=CreateUserSerializer, responses={200: 'Success'})
     def post(self, request):
-        member = MemberSerializer(data=request.data)
+        data = request.data
 
-        if member.is_valid():
-            if len(Member.objects.filter(email=request.data['email'])) == 0:
+        try:
+            member = Member.objects.get(email=data['email'])
+            return Response({"message": "email already exists"}, status=status.HTTP_409_CONFLICT)
+        except Member.DoesNotExist:
+            try:
+                team = Team.objects.get(id=data['team'])
+            except:
+                return Response({"message": "team not found"}, status=status.HTTP_404_NOT_FOUND)
+            if data['is_staff'] is True:
+                member = Member.objects.create(
+                    email=data['email'],
+                    password=make_password(data['password']),
+                    first_name=data['first_name'],
+                    last_name=data['last_name'],
+                    is_staff=True,
+                    team=team
+                )
+                member.set_password(data['password'])
                 member.save()
-                return Response(member.data)
             else:
-                return Response({"message": "email already exists"}, status=status.HTTP_409_CONFLICT)
-        return Response(member.errors, status=status.HTTP_400_BAD_REQUEST)
+                member = Member.objects.create(
+                    email=data['email'],
+                    password=make_password(data['password']),
+                    first_name=data['first_name'],
+                    last_name=data['last_name'],
+                    is_staff=False,
+                    team=None
+                )
+                member.set_password(data['password'])
+                member.save()
+                Pending.objects.create(member=member, team=team)
+            return Response({
+                "id": member.id,
+                "email": member.email,
+                "first_name": member.first_name,
+                "last_name": member.last_name,
+                "team": TeamSerializer(team).data,
+                "is_staff": member.is_staff
+            }, status=status.HTTP_201_CREATED)
+
+
+class LoginAPI(APIView):
+    @swagger_auto_schema(request_body=LoginSerializer, responses={200: 'Success'})
+    def post(self, request):
+        data = request.data
+        email = data['email']
+        password = data['password']
+
+        try:
+            Member.objects.get(email=email)
+        except Member.DoesNotExist:
+            return Response({"message": "email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
+
+        member = auth.authenticate(request, username=email, password=password)
+        print(member)
+        if member is not None:
+            refresh = RefreshToken.for_user(member)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user_data': {
+                    "id": member.id,
+                    "email": member.email,
+                    "first_name": member.first_name,
+                    "last_name": member.last_name,
+                    "team": TeamSerializer(member.team).data,
+                    "is_staff": member.is_staff
+                }
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "incorrect password"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class TeamAPI(APIView):
@@ -67,45 +151,12 @@ class TeamAPI(APIView):
         except:
             return Response({"message": "team not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    def put(self, request, id):
-        try:
-            query = Team.objects.get(id=id)
-        except Team.DoesNotExist:
-            return Response({'error': {'message': "team not found!"}}, status=status.HTTP_404_NOT_FOUND)
-
-        team = TeamSerializer(query, data=request.data, partial=True)
-        if team.is_valid():
-            team.save()
-            return Response(team.data)
-        return Response(team.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, id):
-        try:
-            query = Team.objects.get(id=id)
-        except Team.DoesNotExist:
-            return Response({'error': {'message': "team not found!"}}, status=status.HTTP_404_NOT_FOUND)
-
-        result = Team.objects.get(id=id)
-        result.delete()
-        return Response({"message": "successfully deleted!"}, status=204)
-
 
 class TeamListAPI(APIView):
     def get(self, request):
         queryset = Team.objects.all()
         serializer = TeamSerializer(queryset, many=True)
         return Response(serializer.data)
-
-    def post(self, request):
-        team = TeamSerializer(data=request.data)
-        if team.is_valid():
-            try:
-                Team.objects.get(team_name=request.data['team_name'])
-                return Response({"message": "team already exists"}, status=status.HTTP_409_CONFLICT)
-            except:
-                team.save()
-                return Response(team.data)
-        return Response(team.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LectureListAPI(APIView):
@@ -264,6 +315,8 @@ class TakenListAPI(APIView):
 
 
 class SyncAPI(APIView):
+    permission_classes([IsAuthenticated])
+
     def _get_member(self, request):
         try:
             email = request.data["email"]
@@ -289,6 +342,14 @@ class SyncAPI(APIView):
             return None
 
     def post(self, request):
+        def process_lecture(l, course_id, member):
+            lecture = Lecture.objects.get(
+                lecture_name=l.get('title'), course_id=course_id)
+            if l.get("finished") is True:
+                Taken.objects.create(member=member, lecture=lecture)
+            else:
+                Taken.objects.get(member=member, lecture=lecture).delete()
+
         try:
             member = self._get_member(request=request)
             if member is None:
@@ -311,20 +372,62 @@ class SyncAPI(APIView):
             lecture_serialized = self._get_lectures(
                 course_serialized=course_serialized)
             course_id = course_serialized.data.get("id")
-            for l in lectures:
-                if l.get("finished") == True:
-                    lecture = Lecture.objects.get(
-                        lecture_name=l.get('title'), course_id=course_id)
-                    Taken.objects.create(
-                        member=member, lecture=lecture)
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                for l in lectures:
+                    executor.submit(process_lecture, l, course_id, member)
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": f"{e}"}, status=status.HTTP_404_NOT_FOUND)
 
 
+class PendingAPI(APIView):
+    @swagger_auto_schema(query_serializer=PendingQuerySerializer, responses={200: 'Success'})
+    def get(self, request):
+        team_id = request.GET.get('team_id')
+        try:
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            return Response({'message': 'Team does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        pendings = Pending.objects.filter(team=team)
+        data = []
+        for pending in pendings:
+            m = pending.member
+            data.append({
+                'id': m.id,
+                'email': m.email,
+                'first_name': m.first_name,
+                'last_name': m.last_name,
+                'date_requested': m.date_joined,
+            })
+        return Response(data)
+
+    @swagger_auto_schema(request_body=PendingResponseSerialzier, responses={200: 'Success'})
+    def post(self, request):
+        data = request.data
+        accept = data['accept']
+        try:
+            team = Team.objects.get(id=data['team_id'])
+            member = Member.objects.get(id=data['member_id'])
+            pending = Pending.objects.get(team=team, member=member)
+            if accept == True:
+                member.team = team
+                member.save()
+                pending.delete()
+                return Response({'message': 'Successfully accepted'}, status=status.HTTP_200_OK)
+            pending.delete()
+            return Response({'message': 'Successfully rejected'}, status=status.HTTP_200_OK)
+        except Team.DoesNotExist:
+            return Response({'message': 'Team does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Member.DoesNotExist:
+            return Response({'message': 'Member does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Pending.DoesNotExist:
+            return Response({'message': 'Not on the pending list'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class InitializeDataAPI(APIView):
     def delete(self, request):
         Member.objects.all().delete()
+        Pending.objects.all().delete()
         Lecture.objects.all().delete()
         Course.objects.all().delete()
         Taken.objects.all().delete()

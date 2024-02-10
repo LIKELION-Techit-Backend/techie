@@ -1,20 +1,32 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
 
 
-class Member(models.Model):
+class Member(AbstractUser, PermissionsMixin):
     id = models.BigAutoField(primary_key=True)
-    name = models.CharField(max_length=20, null=False)
-    email = models.CharField(max_length=30, null=False)
-    password = models.CharField(max_length=20, null=False)
-    role = models.CharField(max_length=10, null=False, default="member")
+    username = None  # username을 사용 안할 경우
+    email = models.EmailField(('email'), unique=True)
     team = models.ForeignKey(
-        'Team', related_name='team', on_delete=models.CASCADE, db_column="team_id")
+        'Team', related_name='team', on_delete=models.CASCADE, db_column="team_id", null=True)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+
+class Pending(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    member = models.ForeignKey(
+        'Member', related_name='pending_member', on_delete=models.CASCADE, db_column="member_id")
+    team = models.ForeignKey(
+        'Team', related_name='pending_team', on_delete=models.CASCADE, db_column="team_id")
 
 
 class Team(models.Model):
     id = models.BigAutoField(primary_key=True)
-    team_name = models.CharField(max_length=30)
+    abbreviation = models.CharField(max_length=10, unique=True, blank=True)
+    name = models.CharField(max_length=30, unique=True, blank=True)
 
 
 class Lecture(models.Model):
