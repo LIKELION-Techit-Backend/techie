@@ -27,7 +27,7 @@ jobs:
       - name: Create new ElasticBeanstalk Application Version
         run: |
           aws elasticbeanstalk create-application-version \
-          --application-name Techit-env \
+          --application-name techit \
           --source-bundle S3Bucket="elasticbeanstalk-us-east-1-471112847076",S3Key="deploy_package.zip" \
           --version-label "ver-${{ github.sha }}" \
           --description "commit-sha-${{ github.sha }}"
