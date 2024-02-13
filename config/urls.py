@@ -49,7 +49,7 @@ urlpatterns = [
     path('api/taken/<int:id>', TakenAPI.as_view()),
     path('api/pending', PendingAPI.as_view()),
     path('api/sync', SyncAPI.as_view()),
-    path('api/initialize', InitializeDataAPI.as_view()),
+    # path('api/initialize', InitializeDataAPI.as_view()),
     path(r'swagger(?P<format>\.json|\.yaml)', schema_view.without_ui(
         cache_timeout=0), name='schema-json'),
     path(r'swagger', schema_view.with_ui(
