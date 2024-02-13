@@ -61,3 +61,7 @@ class PendingResponseSerialzier(serializers.Serializer):
     member_id = serializers.IntegerField()
     team_id = serializers.IntegerField()
     accept = serializers.BooleanField()
+
+
+class SyncBodySerializer(serializers.Serializer):
+    input = serializers.JSONField()
