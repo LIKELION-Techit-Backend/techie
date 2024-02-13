@@ -53,15 +53,7 @@ class PendingSerializer(serializers.Serializer):
         fields = '__all__'
 
 
-class PendingQuerySerializer(serializers.Serializer):
-    team_id = serializers.IntegerField()
-
-
 class PendingResponseSerialzier(serializers.Serializer):
     member_id = serializers.IntegerField()
     team_id = serializers.IntegerField()
     accept = serializers.BooleanField()
-
-
-class SyncBodySerializer(serializers.Serializer):
-    input = serializers.JSONField()
