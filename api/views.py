@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Member, Lecture, Course, Team, Taken, Pending
 from rest_framework.views import APIView
-from .serializers import LoginSerializer, MemberSerializer, PendingQuerySerializer, PendingResponseSerialzier, PendingSerializer, SyncBodySerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
+from .serializers import LoginSerializer, MemberSerializer, PendingQuerySerializer, PendingResponseSerialzier, PendingSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib import auth
@@ -15,10 +15,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class MemberAPI(APIView):
-    @swagger_auto_schema(
-        operation_summary="asdasd",
-        operation_description="하아하"
-    )
     def get(self, request, id):
         try:
             member = Member.objects.get(id=id)
@@ -46,7 +42,6 @@ class MemberAPI(APIView):
             return Response(member.data)
         return Response(member.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @permission_classes([IsAuthenticated])
     def delete(self, request, id):
         try:
             query = Member.objects.get(id=id)
@@ -212,7 +207,9 @@ class LectureAPI(APIView):
         return Response({"message": "successfully deleted"}, status=204)
 
 
+
 class CourseAPI(APIView):
+    @swagger_auto_schema(operation_summary="Get one course data")
     def get(self, request, id):
         try:
             course = Course.objects.get(id=id)
@@ -221,6 +218,10 @@ class CourseAPI(APIView):
         except:
             return Response({"message": "course not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+            operation_summary="Modify course data (token needed)",
+            manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)])
+    @permission_classes([IsAuthenticated])
     def put(self, request, id):
         try:
             query = Course.objects.get(id=id)
@@ -233,6 +234,10 @@ class CourseAPI(APIView):
             return Response(course.data)
         return Response(course.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+            operation_summary="Delete course data (token needed)",
+            manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)])
+    @permission_classes([IsAuthenticated])
     def delete(self, request, id):
         try:
             query = Course.objects.get(id=id)
@@ -244,11 +249,13 @@ class CourseAPI(APIView):
 
 
 class CourseListAPI(APIView):
+    @swagger_auto_schema(operation_summary="Get all course data")
     def get(self, request):
         queryset = Course.objects.all()
         serializer = CourseSerializer(queryset, many=True)
         return Response(serializer.data)
-
+    
+    @swagger_auto_schema(operation_summary="Add course data", request_body=CourseSerializer)
     def post(self, request):
         course = CourseSerializer(data=request.data)
 
@@ -262,14 +269,25 @@ class CourseListAPI(APIView):
 
 
 class TakenAPI(APIView):
+    @swagger_auto_schema(
+            operation_summary="Get one member's taken data")
+    @permission_classes([IsAuthenticated])
     def get(self, request, id):
         try:
-            taken = Taken.objects.get(id=id)
-            serializer = TakenSerializer(taken)
+            mid = id
+            if mid is not None:
+                queryset = Taken.objects.filter(member=mid)
+            else:
+                queryset = Taken.objects.all()
+            serializer = TakenSerializer(queryset, many=True)
             return Response(serializer.data)
         except:
             return Response({"message": "taken course is not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+            operation_summary="Delete one member's taken data (token needed)",
+            manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)])
+    @permission_classes([IsAuthenticated])
     def delete(self, request, id):
         try:
             Taken.objects.get(id=id)
@@ -282,15 +300,21 @@ class TakenAPI(APIView):
 
 
 class TakenListAPI(APIView):
+    @swagger_auto_schema(
+            operation_summary="Get team's or all taken data", manual_parameters= [openapi.Parameter('tid', openapi.IN_QUERY, description="team id", type=openapi.TYPE_STRING, required=False)])
+    @permission_classes([IsAuthenticated])
     def get(self, request):
-        mid = request.GET.get('mid')
-        if mid is not None:
-            queryset = Taken.objects.filter(member=mid)
+        tid = request.GET.get('tid')
+        if tid is not None:
+            queryset = Taken.objects.filter(member=tid)
         else:
             queryset = Taken.objects.all()
         serializer = TakenSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+            operation_summary="Add one member's taken data")
+    @permission_classes([IsAuthenticated])
     def post(self, request):
         mid = request.data['mid']
         lid = request.data['lid']
@@ -346,7 +370,6 @@ class SyncAPI(APIView):
         except Course.DoesNotExist as e:
             return None
 
-    @swagger_auto_schema(request_body=SyncBodySerializer,  manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)])
     def post(self, request):
         def process_lecture(l, course_id, member):
             lecture = Lecture.objects.get(
