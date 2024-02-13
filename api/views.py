@@ -16,8 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 class MemberAPI(APIView):
     @swagger_auto_schema(
-        operation_summary="asdasd",
-        operation_description="하아하"
+        operation_summary="Get one user data"
     )
     def get(self, request, id):
         try:
@@ -34,6 +33,12 @@ class MemberAPI(APIView):
         except:
             return Response({"message": "member not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+        operation_summary="Modify user data (token needed)",
+        manual_parameters=[openapi.Parameter(
+            'Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
+    )
+    @permission_classes([IsAuthenticated])
     def put(self, request, id):
         try:
             query = Member.objects.get(id=id)
@@ -46,6 +51,11 @@ class MemberAPI(APIView):
             return Response(member.data)
         return Response(member.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_summary="Delete user data (token needed)",
+        manual_parameters=[openapi.Parameter(
+            'Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
+    )
     @permission_classes([IsAuthenticated])
     def delete(self, request, id):
         try:
@@ -59,6 +69,7 @@ class MemberAPI(APIView):
 
 
 class MemberListAPI(APIView):
+    @swagger_auto_schema(operation_summary="Get all user data")
     def get(self, request):
         queryset = Member.objects.all()
         return Response([{
@@ -70,7 +81,7 @@ class MemberListAPI(APIView):
             "is_staff": member.is_staff
         } for member in queryset], status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(request_body=CreateUserSerializer, responses={200: 'Success'})
+    @swagger_auto_schema(operation_summary="Sign Up", tag=["auth"], request_body=CreateUserSerializer)
     def post(self, request):
         data = request.data
 
@@ -116,7 +127,7 @@ class MemberListAPI(APIView):
 
 
 class LoginAPI(APIView):
-    @swagger_auto_schema(request_body=LoginSerializer, responses={200: 'Success'})
+    @swagger_auto_schema(tag=["auth"], request_body=LoginSerializer, responses={200: 'Success'})
     def post(self, request):
         data = request.data
         email = data['email']
@@ -148,6 +159,7 @@ class LoginAPI(APIView):
 
 
 class TeamAPI(APIView):
+    @swagger_auto_schema(operation_summary="Get one team data")
     def get(self, request, id):
         try:
             team = Team.objects.get(id=id)
@@ -158,6 +170,7 @@ class TeamAPI(APIView):
 
 
 class TeamListAPI(APIView):
+    @swagger_auto_schema(operation_summary="Get all teams data")
     def get(self, request):
         queryset = Team.objects.all()
         serializer = TeamSerializer(queryset, many=True)
@@ -387,7 +400,7 @@ class SyncAPI(APIView):
 
 
 class PendingAPI(APIView):
-    @swagger_auto_schema(query_serializer=PendingQuerySerializer, responses={200: 'Success'})
+    @swagger_auto_schema(query_serializer=PendingSerializer, responses={200: 'Success'})
     def get(self, request):
         team_id = request.GET.get('team_id')
         try:
