@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Member, Lecture, Course, Team, Taken, Pending
 from rest_framework.views import APIView
-from .serializers import LoginSerializer, MemberSerializer, PendingQuerySerializer, PendingResponseSerialzier, PendingSerializer, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
+from .serializers import LoginSerializer, MemberSerializer, PendingResponseSerialzier, TeamSerializer, LectureSerializer, CourseSerializer, TakenSerializer, CreateUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib import auth
@@ -12,6 +12,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from concurrent.futures import ThreadPoolExecutor
+
+token_param = openapi.Parameter(
+    'Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)
 
 
 class MemberAPI(APIView):
@@ -34,9 +37,9 @@ class MemberAPI(APIView):
             return Response({"message": "member not found"}, status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
-        operation_summary="Modify user data (token needed)",
-        manual_parameters=[openapi.Parameter(
-            'Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
+        operation_summary="Modify user data (token)",
+        manual_parameters=[token_param],
+        request_body=CreateUserSerializer
     )
     @permission_classes([IsAuthenticated])
     def put(self, request, id):
@@ -52,9 +55,8 @@ class MemberAPI(APIView):
         return Response(member.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
-        operation_summary="Delete user data (token needed)",
-        manual_parameters=[openapi.Parameter(
-            'Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
+        operation_summary="Delete user data (token)",
+        manual_parameters=[token_param]
     )
     @permission_classes([IsAuthenticated])
     def delete(self, request, id):
@@ -81,7 +83,7 @@ class MemberListAPI(APIView):
             "is_staff": member.is_staff
         } for member in queryset], status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(operation_summary="Sign Up", tag=["auth"], request_body=CreateUserSerializer)
+    @swagger_auto_schema(operation_summary="Sign Up", tags=["auth"], request_body=CreateUserSerializer)
     def post(self, request):
         data = request.data
 
@@ -127,7 +129,7 @@ class MemberListAPI(APIView):
 
 
 class LoginAPI(APIView):
-    @swagger_auto_schema(tag=["auth"], request_body=LoginSerializer, responses={200: 'Success'})
+    @swagger_auto_schema(tags=["auth"], operation_summary="Login", request_body=LoginSerializer, responses={200: 'Success'})
     def post(self, request):
         data = request.data
         email = data['email']
@@ -185,7 +187,8 @@ class LectureListAPI(APIView):
         serializer = LectureSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @swagger_auto_schema(operation_summary="Add lecture data", request_body=LectureSerializer)
+    @swagger_auto_schema(operation_summary="Add lecture data (token)", request_body=LectureSerializer, manual_parameters=[token_param])
+    @permission_classes([IsAuthenticated])
     def post(self, request):
         print(request.data)
         print("============================")
@@ -213,9 +216,9 @@ class LectureAPI(APIView):
             return Response({"message": "lecture not found"}, status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
-        operation_summary="Modify lecture data",
-        manual_parameters=[openapi.Parameter(
-            'Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
+        operation_summary="Modify lecture data (token)",
+        request_body=LectureSerializer,
+        manual_parameters=[token_param]
     )
     @permission_classes([IsAuthenticated])
     def put(self, request, id):
@@ -231,9 +234,8 @@ class LectureAPI(APIView):
         return Response(lecture.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
-        operation_summary="Delete lecture data",
-        manual_parameters=[openapi.Parameter(
-            'Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
+        operation_summary="Delete lecture data (token)",
+        manual_parameters=[token_param]
     )
     @permission_classes([IsAuthenticated])
     def delete(self, request, id):
@@ -253,7 +255,8 @@ class CourseAPI(APIView):
             return Response({"message": "course not found"}, status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
-        operation_summary="Modify course data (token needed)",
+        operation_summary="Modify course data (token)",
+        request_body=CourseSerializer,
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)])
     @permission_classes([IsAuthenticated])
     def put(self, request, id):
@@ -269,7 +272,7 @@ class CourseAPI(APIView):
         return Response(course.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
-        operation_summary="Delete course data (token needed)",
+        operation_summary="Delete course data (token)",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)])
     @permission_classes([IsAuthenticated])
     def delete(self, request, id):
@@ -289,7 +292,8 @@ class CourseListAPI(APIView):
         serializer = CourseSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @swagger_auto_schema(operation_summary="Add course data", request_body=CourseSerializer)
+    @swagger_auto_schema(operation_summary="Add course data (token)", request_body=CourseSerializer, manual_parameters=[token_param])
+    @permission_classes([IsAuthenticated])
     def post(self, request):
         course = CourseSerializer(data=request.data)
 
@@ -305,7 +309,6 @@ class CourseListAPI(APIView):
 class TakenAPI(APIView):
     @swagger_auto_schema(
         operation_summary="Get one member's taken data")
-    @permission_classes([IsAuthenticated])
     def get(self, request, id):
         try:
             mid = id
@@ -319,7 +322,7 @@ class TakenAPI(APIView):
             return Response({"message": "taken course is not found"}, status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
-        operation_summary="Delete one member's taken data (token needed)",
+        operation_summary="Delete one member's taken data (token)",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)])
     @permission_classes([IsAuthenticated])
     def delete(self, request, id):
@@ -335,8 +338,7 @@ class TakenAPI(APIView):
 
 class TakenListAPI(APIView):
     @swagger_auto_schema(
-        operation_summary="Get team's or all taken data", manual_parameters=[openapi.Parameter('tid', openapi.IN_QUERY, description="team id", type=openapi.TYPE_STRING, required=False)])
-    @permission_classes([IsAuthenticated])
+        operation_summary="Get team's or all taken data", manual_parameters=[openapi.Parameter('tid', openapi.IN_QUERY, description="team_id (get all data with empty value)", type=openapi.TYPE_INTEGER, required=False)])
     def get(self, request):
         tid = request.GET.get('tid')
         if tid is not None:
@@ -378,7 +380,27 @@ class TakenListAPI(APIView):
 
 
 class SyncAPI(APIView):
-    permission_classes([IsAuthenticated])
+    body_param = openapi.Schema(
+        'data', openapi.IN_BODY,
+        required=['name', 'email', 'title', 'code', 'course'],
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+            'title': openapi.Schema(type=openapi.TYPE_STRING),
+            'code': openapi.Schema(type=openapi.TYPE_STRING),
+            'course': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    required=['title', 'finished'],
+                    properties={
+                        'title': openapi.Schema(type=openapi.TYPE_STRING),
+                        'finished': openapi.Schema(type=openapi.TYPE_BOOLEAN)
+                    }
+                )
+            )
+        })
 
     def _get_member(self, request):
         try:
@@ -404,6 +426,13 @@ class SyncAPI(APIView):
         except Course.DoesNotExist as e:
             return None
 
+    @swagger_auto_schema(
+        operation_summary="Sync data (token)",
+        request_body=body_param,
+        manual_parameters=[token_param],
+        responses={200: 'Success'},
+    )
+    @permission_classes([IsAuthenticated])
     def post(self, request):
         def process_lecture(l, course_id, member):
             lecture = Lecture.objects.get(
@@ -444,8 +473,14 @@ class SyncAPI(APIView):
 
 
 class PendingAPI(APIView):
-    @swagger_auto_schema(operation_summary="Get team pending data", query_serializer=PendingQuerySerializer, responses={200: 'Success'}, manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
-                         )
+    @swagger_auto_schema(
+        operation_summary="Get team pending data (token)",
+        manual_parameters=[token_param,
+                           openapi.Parameter(
+                               'team_id', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Team ID')
+                           ],
+        responses={200: 'Success'}
+    )
     @permission_classes([IsAuthenticated])
     def get(self, request):
         team_id = request.GET.get('team_id')
@@ -466,8 +501,12 @@ class PendingAPI(APIView):
             })
         return Response(data)
 
-    @swagger_auto_schema(operation_summary="Accept or reject", request_body=PendingResponseSerialzier, responses={200: 'Success'}, manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="Authorization token", required=True, type=openapi.TYPE_STRING)]
-                         )
+    @swagger_auto_schema(
+        operation_summary="Accept or reject (token)",
+        request_body=PendingResponseSerialzier,
+        manual_parameters=[token_param],
+        responses={200: 'Success'},
+    )
     @permission_classes([IsAuthenticated])
     def post(self, request):
         data = request.data
