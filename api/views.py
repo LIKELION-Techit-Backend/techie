@@ -342,7 +342,12 @@ class TakenListAPI(APIView):
     def get(self, request):
         tid = request.GET.get('tid')
         if tid is not None:
-            queryset = Taken.objects.filter(member=tid)
+            try:
+                team = Team.objects.get(id=tid)
+            except Team.DoesNotExist:
+                return Response({'message': 'team does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            members = Member.objects.filter(team=team)
+            queryset = Taken.objects.filter(member__in=members)
         else:
             queryset = Taken.objects.all()
         serializer = TakenSerializer(queryset, many=True)
