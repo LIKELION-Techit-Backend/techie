@@ -1,5 +1,28 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.contrib.auth.models import BaseUserManager, AbstractUser, PermissionsMixin
+
+
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None):
+        if not email:
+            raise ValueError('must have user email')
+        user = self.model(
+            email=self.normalize_email(email),
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password):
+        user = self.create_user(
+            email=self.normalize_email(email),
+            password=password
+        )
+        user.is_admin = True
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
 
 
 class Member(AbstractUser, PermissionsMixin):
@@ -10,6 +33,8 @@ class Member(AbstractUser, PermissionsMixin):
         'Team', related_name='team', on_delete=models.CASCADE, db_column="team_id", null=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+
+    objects = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
