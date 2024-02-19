@@ -535,11 +535,31 @@ class PendingAPI(APIView):
             return Response({'message': 'Not on the pending list'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InitializeDataAPI(APIView):
-    def delete(self, request):
-        Member.objects.all().delete()
-        Pending.objects.all().delete()
-        Lecture.objects.all().delete()
-        Course.objects.all().delete()
-        Taken.objects.all().delete()
-        return Response({"message": "deleted"}, status=status.HTTP_200_OK)
+class RefreshTokenView(APIView):
+    @swagger_auto_schema(
+        operation_summary="Refresh access token",
+        tags=["auth"],
+        request_body=openapi.Schema(
+            'data', openapi.IN_BODY,
+            type=openapi.TYPE_OBJECT,
+            required=['refresh_token'],
+            responses={200: 'Success'},
+            properties={
+                'refresh_token': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="The refresh token",
+                    required=['refresh_token']
+                )
+            },
+        ))
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh_token')
+            if not refresh_token:
+                return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            token = RefreshToken(refresh_token)
+            access_token = str(token.access_token)
+            return Response({'access_token': access_token}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

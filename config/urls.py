@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import LoginAPI, MemberListAPI, PendingAPI, TeamListAPI, LectureListAPI, LectureAPI, CourseAPI, CourseListAPI, MemberAPI, TeamAPI, TakenAPI, TakenListAPI, SyncAPI, InitializeDataAPI
+from api.views import LoginAPI, MemberListAPI, PendingAPI, TeamListAPI, LectureListAPI, LectureAPI, CourseAPI, CourseListAPI, MemberAPI, TeamAPI, TakenAPI, TakenListAPI, SyncAPI, RefreshTokenView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
@@ -36,6 +36,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/refresh', RefreshTokenView.as_view()),  # 토큰 재발급하기
     path('api/member/', MemberListAPI.as_view()),
     path('api/member/<int:id>', MemberAPI.as_view()),
     path('api/login', LoginAPI.as_view()),
