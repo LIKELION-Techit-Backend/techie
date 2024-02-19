@@ -45,9 +45,9 @@ urlpatterns = [
     path('api/lecture/<int:id>', LectureAPI.as_view()),
     path('api/course/', CourseListAPI.as_view()),
     path('api/course/<int:id>', CourseAPI.as_view()),
-    path('api/taken', TakenListAPI.as_view()),
+    path('api/taken/', TakenListAPI.as_view()),
     path('api/taken/<int:id>', TakenAPI.as_view()),
-    path('api/pending', PendingAPI.as_view()),
+    path('api/pending/', PendingAPI.as_view()),
     path('api/sync', SyncAPI.as_view()),
     # path('api/initialize', InitializeDataAPI.as_view()),
     path(r'swagger(?P<format>\.json|\.yaml)', schema_view.without_ui(
